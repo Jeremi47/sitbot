@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { Star, Download, Heart } from 'lucide-react';
 import Card from './ui/Card';
 import type { Product } from '../lib/supabase';
@@ -7,6 +8,8 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const navigate = useNavigate();
+
   const categoryColors = {
     discord: 'bg-[#4A66F0] text-white',
     chrome: 'bg-[#34A853] text-white',
@@ -20,7 +23,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Card hover className="group cursor-pointer relative overflow-hidden">
+    <Card hover className="group cursor-pointer relative overflow-hidden" onClick={() => navigate(`/product/${product.id}`)}>
       <div className="absolute top-3 right-3 z-10">
         <button className="p-2 bg-white/90 backdrop-blur-sm rounded-full hover:bg-white transition-colors shadow-sm">
           <Heart className="w-4 h-4 text-[#4A4A4A] hover:fill-[#EF4444] hover:text-[#EF4444] transition-colors" />
@@ -72,7 +75,13 @@ export default function ProductCard({ product }: ProductCardProps) {
 
         <div className="flex items-center justify-between pt-2 border-t border-[#E5E7EB]">
           <span className="text-2xl font-bold text-[#0066FF]">{product.price}€</span>
-          <button className="px-4 py-2 bg-[#0066FF] text-white text-sm font-semibold rounded-lg hover:bg-[#0052CC] transition-colors">
+          <button
+            className="px-4 py-2 bg-[#0066FF] text-white text-sm font-semibold rounded-lg hover:bg-[#0052CC] transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/product/${product.id}`);
+            }}
+          >
             Acheter
           </button>
         </div>

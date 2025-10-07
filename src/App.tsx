@@ -10,6 +10,7 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import BuyerDashboardPage from './pages/BuyerDashboardPage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
 import CreateProductPage from './pages/CreateProductPage';
+import CheckoutPage from './pages/CheckoutPage';
 
 function App() {
   return (
@@ -32,6 +33,7 @@ function App() {
                       <Route path="/chrome" element={<CatalogPage />} />
                       <Route path="/twitch" element={<CatalogPage />} />
                       <Route path="/product/:id" element={<ProductDetailPage />} />
+                      <Route path="/checkout/:id" element={<CheckoutPage />} />
                       <Route path="/dashboard/buyer" element={<BuyerDashboardPage />} />
                       <Route path="/dashboard/seller" element={<SellerDashboardPage />} />
                       <Route path="/dashboard/seller/create" element={<CreateProductPage />} />

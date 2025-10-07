@@ -1,31 +1,81 @@
 import { useState, useEffect } from 'react';
-import { Star, Download, Heart, Shield, Clock, Tag, CheckCircle } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Star, Download, Heart, Shield, Clock, Tag, CheckCircle, ArrowLeft } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Card from '../components/ui/Card';
-import { supabase, Product, Review } from '../lib/supabase';
+import { supabase, Product, Review, Profile } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function ProductDetailPage() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
+  const [seller, setSeller] = useState<Profile | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [activeTab, setActiveTab] = useState('description');
   const [loading, setLoading] = useState(true);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   useEffect(() => {
     loadProduct();
-  }, []);
+  }, [id, user]);
+
+  const handleToggleFavorite = async () => {
+    if (!user || !product) {
+      navigate('/login');
+      return;
+    }
+
+    try {
+      if (isFavorite) {
+        await supabase
+          .from('favorites')
+          .delete()
+          .eq('user_id', user.id)
+          .eq('product_id', product.id);
+        setIsFavorite(false);
+      } else {
+        await supabase
+          .from('favorites')
+          .insert({ user_id: user.id, product_id: product.id });
+        setIsFavorite(true);
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    navigate(`/checkout/${product?.id}`);
+  };
 
   const loadProduct = async () => {
+    if (!id) return;
+
     setLoading(true);
     try {
       const { data: productsData } = await supabase
         .from('products')
         .select('*')
+        .eq('id', id)
         .eq('status', 'published')
-        .limit(1)
         .maybeSingle();
 
       if (productsData) {
         setProduct(productsData);
+
+        const { data: sellerData } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', productsData.seller_id)
+          .maybeSingle();
+
+        setSeller(sellerData);
 
         const { data: reviewsData } = await supabase
           .from('reviews')
@@ -34,6 +84,17 @@ export default function ProductDetailPage() {
           .order('created_at', { ascending: false });
 
         setReviews(reviewsData || []);
+
+        if (user) {
+          const { data: favoriteData } = await supabase
+            .from('favorites')
+            .select('*')
+            .eq('user_id', user.id)
+            .eq('product_id', productsData.id)
+            .maybeSingle();
+
+          setIsFavorite(!!favoriteData);
+        }
       }
     } catch (error) {
       console.error('Error loading product:', error);
@@ -59,6 +120,13 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen bg-[#F9FAFB]">
       <div className="max-w-7xl mx-auto px-6 py-8">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-[#4A4A4A] hover:text-[#0066FF] mb-6 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Retour
+        </button>
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -216,12 +284,17 @@ export default function ProductDetailPage() {
               </div>
 
               <div className="space-y-3 mb-6">
-                <Button className="w-full" size="large">
+                <Button className="w-full" size="large" onClick={handleBuyNow}>
                   Acheter maintenant
                 </Button>
-                <Button variant="secondary" className="w-full" size="large">
-                  <Heart className="w-5 h-5" />
-                  Ajouter aux favoris
+                <Button
+                  variant="secondary"
+                  className="w-full"
+                  size="large"
+                  onClick={handleToggleFavorite}
+                >
+                  <Heart className={`w-5 h-5 ${isFavorite ? 'fill-[#EF4444] text-[#EF4444]' : ''}`} />
+                  {isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                 </Button>
               </div>
 
@@ -247,35 +320,33 @@ export default function ProductDetailPage() {
               </div>
             </Card>
 
-            <Card>
-              <h3 className="font-bold text-[#1A1A1A] mb-4">À propos du vendeur</h3>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-[#0066FF] to-[#8B5CF6] rounded-full flex items-center justify-center text-white font-bold">
-                  V
+            {seller && (
+              <Card>
+                <h3 className="font-bold text-[#1A1A1A] mb-4">À propos du vendeur</h3>
+                <div className="flex items-center gap-3 mb-4">
+                  {seller.avatar_url ? (
+                    <img
+                      src={seller.avatar_url}
+                      alt={seller.username}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#0066FF] to-[#8B5CF6] rounded-full flex items-center justify-center text-white font-bold">
+                      {seller.username.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div>
+                    <div className="font-semibold text-[#1A1A1A]">{seller.username}</div>
+                    {seller.is_verified && (
+                      <div className="text-sm text-[#00D980]">Vendeur vérifié</div>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <div className="font-semibold text-[#1A1A1A]">VendeurPro</div>
-                  <div className="text-sm text-[#9CA3AF]">Vendeur vérifié</div>
-                </div>
-              </div>
-              <div className="space-y-2 text-sm mb-4">
-                <div className="flex justify-between">
-                  <span className="text-[#9CA3AF]">Note moyenne</span>
-                  <span className="font-semibold text-[#1A1A1A]">4.8/5</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#9CA3AF]">Produits</span>
-                  <span className="font-semibold text-[#1A1A1A]">12</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[#9CA3AF]">Ventes</span>
-                  <span className="font-semibold text-[#1A1A1A]">2,543</span>
-                </div>
-              </div>
-              <Button variant="secondary" className="w-full" size="small">
-                Voir le profil
-              </Button>
-            </Card>
+                {seller.bio && (
+                  <p className="text-sm text-[#4A4A4A] mb-4">{seller.bio}</p>
+                )}
+              </Card>
+            )}
           </div>
         </div>
       </div>
