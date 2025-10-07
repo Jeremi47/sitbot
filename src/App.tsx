@@ -9,6 +9,7 @@ import CatalogPage from './pages/CatalogPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import BuyerDashboardPage from './pages/BuyerDashboardPage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
+import CreateProductPage from './pages/CreateProductPage';
 
 function App() {
   return (
@@ -33,6 +34,7 @@ function App() {
                       <Route path="/product/:id" element={<ProductDetailPage />} />
                       <Route path="/dashboard/buyer" element={<BuyerDashboardPage />} />
                       <Route path="/dashboard/seller" element={<SellerDashboardPage />} />
+                      <Route path="/dashboard/seller/create" element={<CreateProductPage />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </main>

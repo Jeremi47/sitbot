@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Package, DollarSign, Star, CreditCard as Edit, Trash2, Eye, Plus } from 'lucide-react';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
@@ -6,6 +7,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase, Product } from '../lib/supabase';
 
 export default function SellerDashboardPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('overview');
   const [products, setProducts] = useState<Product[]>([]);
@@ -196,7 +198,7 @@ export default function SellerDashboardPage() {
               <Card>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-[#1A1A1A]">Mes produits</h2>
-                  <Button>
+                  <Button onClick={() => navigate('/dashboard/seller/create')}>
                     <Plus className="w-5 h-5" />
                     Nouveau produit
                   </Button>
@@ -219,7 +221,7 @@ export default function SellerDashboardPage() {
                     <p className="text-[#9CA3AF] mb-6">
                       Commencez par créer votre premier produit
                     </p>
-                    <Button>
+                    <Button onClick={() => navigate('/dashboard/seller/create')}>
                       <Plus className="w-5 h-5" />
                       Créer un produit
                     </Button>
